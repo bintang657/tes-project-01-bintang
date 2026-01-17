@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Tutor SMA • Ultimate Super Gila</title>
+<style>
+:root { --bg:#0f172a; --card:#1e293b; --accent:#38bdf8; --text:#e5e7eb; --bonus:#facc15; }
+body{margin:0;font-family:'Poppins',system-ui,sans-serif;background:var(--bg);color:var(--text);}
+header{padding:28px 16px;text-align:center;}
+header h1{font-size:1.8rem;}
+nav{margin-top:14px;display:flex;justify-content:center;gap:10px;flex-wrap:wrap;}
+nav button{background:#334155;color:var(--text);border:none;padding:10px 14px;border-radius:12px;font-weight:600;cursor:pointer;}
+nav button:hover{background:#475569;}
+section{max-width:900px;margin:auto;padding:16px;}
+.card{background:rgba(30,41,59,0.85);backdrop-filter:blur(8px);border-radius:20px;padding:20px;margin-bottom:18px;position:relative;box-shadow:0 0 20px rgba(0,0,0,0.5);transition:all 0.3s ease;}
+.card.bonus{border:2px solid var(--bonus);box-shadow:0 0 30px var(--bonus);}
+button{width:100%;padding:12px;margin-top:8px;border:none;border-radius:12px;background:#334155;color:var(--text);font-size:1rem;cursor:pointer;transition:all 0.2s ease;}
+button:hover{background:#475569;}
+.ai{color:var(--accent);font-weight:600;}
+footer{text-align:center;font-size:0.85rem;opacity:0.85;padding:24px;}
+.mood-btns{display:flex;justify-content:center;gap:8px;margin:12px 0;}
+.mood-btns button{width:auto;padding:6px 12px;border-radius:12px;background:#334155;color:var(--text);cursor:pointer;}
+.progress-bar{background:#334155;border-radius:12px;overflow:hidden;height:20px;margin-top:8px;}
+.progress-fill{background:var(--accent);height:100%;width:0%;transition:width 0.5s ease;}
+.timer{position:absolute;top:10px;right:10px;background:#475569;padding:4px 8px;border-radius:8px;}
+.leaderboard{background:rgba(30,41,59,0.85);padding:12px;border-radius:12px;margin-top:10px;box-shadow:0 0 12px rgba(0,0,0,0.4);}
+.leaderboard h3{margin-top:0;}
+@keyframes fadeIn { from{opacity:0;transform:translateY(-20px);} to{opacity:1;transform:translateY(0);} }
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<header>
+<h1>AI Tutor SMA Ultimate Super Gila</h1>
+<p id="headerMsg">Halo! Silahkan login dulu untuk mulai belajar.</p>
+<div class="mood-btns">
+  <button onclick="setMood('fokus')">🎯 Fokus</button>
+  <button onclick="setMood('energik')">⚡ Energik</button>
+  <button onclick="setMood('santai')">🌿 Santai</button>
+</div>
+<nav>
+  <button onclick="loadJalur('teknik')">Teknik</button>
+  <button onclick="loadJalur('kesehatan')">Kesehatan</button>
+  <button onclick="loadJalur('kedinasan')">Kedinasan</button>
+  <button onclick="loadJalur('soshum')">Soshum</button>
+</nav>
+</header>
+
+<!-- Login Modal -->
+<div id="loginModal" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(15,23,42,0.9);display:flex;align-items:center;justify-content:center;z-index:999;">
+  <div style="background:rgba(30,41,59,0.85);backdrop-filter:blur(8px);padding:30px;border-radius:20px;text-align:center;box-shadow:0 0 20px rgba(0,0,0,0.5);width:90%;max-width:400px;animation:fadeIn 0.5s;">
+    <h2 style="color:#38bdf8;margin-bottom:16px;">Selamat Datang</h2>
+    <input id="userName" placeholder="Masukkan nama kamu" style="padding:12px;width:80%;border:none;border-radius:12px;margin-bottom:16px;text-align:center;">
+    <br>
+    <button id="loginBtn" disabled style="padding:10px 20px;border:none;border-radius:12px;background:#38bdf8;color:#0f172a;font-weight:bold;cursor:pointer;">Masuk</button>
+  </div>
+</div>
+
+<section class="card">
+<p class="ai">AI Tutor</p>
+<p id="aiMessage"></p>
+<div class="progress-bar"><div id="progressFill" class="progress-fill"></div></div>
+<p id="progress"></p>
+
+<div id="leaderboard" class="leaderboard">
+<h3>Leaderboard Lokal</h3>
+<ul id="lbList"></ul>
+</div>
+</section>
+
+<section id="lesson"></section>
+
+<footer>
+<p>AI Learning Platform SMA Ultimate Super Gila</p>
+<p>Dibuat oleh <strong>Bintang KR</strong> • Version 1.0</p>
+</footer>
+
+<script>
+// ===== LOGIN =====
+const input = document.getElementById("userName");
+const btn = document.getElementById("loginBtn");
+const loginModal = document.getElementById("loginModal");
+const headerMsg = document.getElementById("headerMsg");
+
+input.addEventListener("input",()=>{ btn.disabled = input.value.trim().length<3; });
+btn.addEventListener("click",()=>{
+  const name = input.value.trim();
+  localStorage.setItem("userName",name);
+  loginModal.style.display="none";
+  headerMsg.innerText = `Halo, ${name}! Pilih jalur untuk mulai belajar.`;
+});
+const savedName = localStorage.getItem("userName");
+if(savedName){ loginModal.style.display="none"; headerMsg.innerText=`Halo, ${savedName}! Pilih jalur untuk mulai belajar.`; }
+
+// ===== BANK SOAL =====
+const bankSoal = {
+  teknik:[{q:"Sebuah algoritma O(n log n)?",a:["Insertion Sort","Heap Sort","Selection Sort"],c:1,e:"Heap Sort termasuk O(n log n)."}, {q:"Prinsip SOLID yang bukan?",a:["Single Responsibility","Open/Closed","Fast Shipment"],c:2,e:"Fast Shipment bukan SOLID."}],
+  kesehatan:[{q:"Fungsi limfosit T?",a:["Hormon","Hancurkan sel asing","Oksigen"],c:1,e:"Limfosit T kenali & hancurkan sel asing."},{q:"Hemostasis bertugas?",a:["Hentikan darah","Naikkan suhu","Kurangi denyut"],c:0,e:"Hemostasis menghentikan pendarahan."}],
+  kedinasan:[{q:"Makna sila 3?",a:["Persatuan Indonesia","Kerakyatan","Persatuan"],c:2,e:"Sila ke-3 adalah Persatuan Indonesia."},{q:"UUD 1945 amandemen?",a:["Perubahan konstitusi","Hapus hukum","Abolisi"],c:0,e:"Amandemen = perubahan konstitusi."}],
+  soshum:[{q:"Elastisitas permintaan?",a:["Responsif","Tidak responsif","Jumlah tetap"],c:0,e:"Elastisitas = responsif terhadap harga."},{q:"Teori konflik sosiologi?",a:["Kesetaraan","Pertentangan kelompok","Kemajuan teknologi"],c:1,e:"Teori konflik fokus pertentangan kelompok."}]
+};
+
+// ===== STATE =====
+let currentIndex=0,currentJalur="";
+let state=JSON.parse(localStorage.getItem("aiState"))||{level:1,xp:0,benar:0,salah:0,soalCount:0};
+let timerInterval;
+
+// ===== AI & PROGRESS =====
+function updateAI(msg){document.getElementById("aiMessage").innerText=msg;document.getElementById("progress").innerText=`Level ${state.level} • XP ${state.xp}/100 • Benar ${state.benar} • Salah ${state.salah}`;document.getElementById("progressFill").style.width=Math.min(state.xp,100)+"%";updateLeaderboard();}
+
+// ===== LEADERBOARD =====
+function updateLeaderboard(){const lb=JSON.parse(localStorage.getItem("leaderboard")||"{}");const lbList=document.getElementById("lbList");lbList.innerHTML="";if(!lb[currentJalur])lb[currentJalur]=[];lb[currentJalur].push(state.xp);lb[currentJalur]=lb[currentJalur].sort((a,b)=>b-a).slice(0,5);localStorage.setItem("leaderboard",JSON.stringify(lb));lb[currentJalur].forEach((v,i)=>{lbList.innerHTML+=`<li>#${i+1}: ${v} XP</li>`;});}
+
+// ===== LOAD JALUR =====
+function loadJalur(jalur){clearInterval(timerInterval);currentJalur=jalur;let soal;if(state.soalCount>0&&state.soalCount%3===0){soal={q:"SOAL BONUS!",a:["Pilihan X","Pilihan Y","Pilihan Z"],c:1,e:"Jawaban bonus benar!"};}else{soal=bankSoal[jalur][Math.floor(Math.random()*bankSoal[jalur].length)];}state.soalCount++;const jawaban=soal.a.map((text,i)=>({text,index:i}));for(let i=jawaban.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[jawaban[i],jawaban[j]]=[jawaban[j],jawaban[i]];}updateAI(`Saya akan membimbing kamu di jalur ${jalur}. Fokus dan jawab dengan tenang.`);document.getElementById("lesson").innerHTML=`<div class="card ${state.soalCount%3===0?'bonus':''}"><div class="timer" id="timer">30</div><h2>${jalur.toUpperCase()}</h2><p>${soal.q}</p>${jawaban.map(j=>`<button onclick="jawab(${j.index},${soal.c},'${soal.e}',${state.soalCount%3===0})">${j.text}</button>`).join("")}<p id="feedback" class="ai"></p></div>`;let t=30;const timerEl=document.getElementById("timer");timerEl.innerText=t;timerInterval=setInterval(()=>{t--;timerEl.innerText=t;if(t<=0){clearInterval(timerInterval);document.getElementById("feedback").innerText="Waktu habis! Salah otomatis.";state.salah++;updateAI("Ayo semangat lanjut soal berikutnya!");localStorage.setItem("aiState",JSON.stringify(state));}},1000);}
+
+// ===== JAWABAN =====
+function jawab(p,c,e,isBonus=false){clearInterval(timerInterval);const fb=document.getElementById("feedback");const xpGain=isBonus?50:25;if(p===c){state.xp+=xpGain;state.benar++;fb.innerText=`Benar! ${e}`;}else{state.salah++;fb.innerText=`Salah! ${e}`;}if(state.xp>=100){state.xp-=100;state.level++;updateAI("Level meningkat! Soal akan menyesuaikan.");}else{updateAI("Siap lanjut soal berikutnya.");}localStorage.setItem("aiState",JSON.stringify(state));loadJalur(currentJalur);}
+
+// ===== MOOD MODE =====
+function setMood(mode){if(mode==='fokus'){document.body.style.background="#0a0f1b";document.body.style.color="#e5e7eb";}else if(mode==='energik'){document.body.style.background="#1a1f33";document.body.style.color="#facc15";}else if(mode==='santai'){document.body.style.background="#123456";document.body.style.color="#a5f3fc";}localStorage.setItem("mood",mode);}
+const savedMood=localStorage.getItem("mood");if(savedMood)setMood(savedMood);
+updateAI("Halo! AI Tutor siap bantu belajar mu.");
+</script>
+
+</body>
+</html>
