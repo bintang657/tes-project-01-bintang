@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Tutor SMA • Pro Dynamic</title>
+<style>
+:root { --bg:#0f172a; --card:#1e293b; --accent:#38bdf8; --text:#e5e7eb; }
+body{margin:0;font-family:system-ui,sans-serif;background:var(--bg);color:var(--text);}
+header{padding:28px 16px;text-align:center;}
+header h1{font-size:1.7rem;}
+nav{margin-top:14px;display:flex;justify-content:center;gap:10px;flex-wrap:wrap;}
+nav button{background:#334155;color:var(--text);border:none;padding:10px 14px;border-radius:10px;font-weight:600;}
+section{max-width:900px;margin:auto;padding:16px;}
+.card{background:var(--card);border-radius:16px;padding:20px;margin-bottom:18px;}
+button{width:100%;padding:12px;margin-top:8px;border:none;border-radius:12px;background:#334155;color:var(--text);font-size:1rem;}
+button:hover{background:#475569;}
+.ai{color:var(--accent);font-weight:600;}
+.music-box{display:flex;align-items:center;gap:12px;margin-top:10px;}
+.music-box input[type="range"]{width:100%;}
+footer{text-align:center;font-size:0.85rem;opacity:0.7;padding:24px;}
+.mood-btns{display:flex;justify-content:center;gap:8px;margin:12px 0;}
+.mood-btns button{width:auto;padding:6px 12px;}
+</style>
+</head>
+<body>
+
+<header>
+<h1>AI Tutor SMA Pro Dynamic</h1>
+<p>Belajar adaptif dengan musik & AI Tutor</p>
+<nav>
+  <button onclick="loadJalur('teknik')">Teknik</button>
+  <button onclick="loadJalur('kesehatan')">Kesehatan</button>
+  <button onclick="loadJalur('kedinasan')">Kedinasan</button>
+  <button onclick="loadJalur('soshum')">Soshum</button>
+</nav>
+<div class="mood-btns">
+  <button onclick="setMood('fokus')">🎯 Fokus</button>
+  <button onclick="setMood('energik')">⚡ Energik</button>
+  <button onclick="setMood('santai')">🌿 Santai</button>
+</div>
+</header>
+
+<section class="card">
+<p class="ai">AI Tutor</p>
+<p id="aiMessage"></p>
+<p id="progress"></p>
+<div class="music-box">
+<button id="musicBtn">▶️ Play Music</button>
+<input type="range" min="0" max="1" step="0.01" id="volumeControl">
+</div>
+</section>
+
+<section id="lesson"></section>
+
+<footer>
+<p>AI Learning Platform SMA Pro Dynamic</p>
+<p>Dibuat oleh <strong>Star Xl-B1</strong></p>
+</footer>
+
+<audio id="bgm" loop></audio>
+
+<script>
+// ===== DATA DYNAMIC ALL-IN-ONE =====
+const playlists = {
+  teknik:[...Array(10).keys()].map(i=>"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-"+(i+1)+".mp3"),
+  kesehatan:[...Array(10).keys()].map(i=>"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-"+(i+11)+".mp3"),
+  kedinasan:[...Array(10).keys()].map(i=>"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-"+(i+21)+".mp3"),
+  soshum:[...Array(10).keys()].map(i=>"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-"+(i+31)+".mp3")
+};
+
+const bankSoal = {
+  teknik:[
+    {q:"Apa tujuan algoritma?",a:["Menebak","Menyusun langkah logis","Menghafal"],c:1,e:"Algoritma membuat solusi lebih terstruktur."},
+    {q:"Pemrograman digunakan untuk?",a:["Memberi perintah ke komputer","Menggambar","Menulis cerita"],c:0,e:"Program berisi instruksi untuk komputer."}
+  ],
+  kesehatan:[
+    {q:"Organ pernapasan utama?",a:["Paru-paru","Jantung","Ginjal"],c:0,e:"Paru-paru mengambil oksigen."},
+    {q:"Darah membawa?",a:["Oksigen","Minyak","Air"],c:0,e:"Oksigen dibawa oleh darah."}
+  ],
+  kedinasan:[
+    {q:"Dasar negara Indonesia?",a:["UUD","Pancasila","Bendera"],c:1,e:"Pancasila adalah dasar negara."},
+    {q:"Tes logika menilai?",a:["Pola pikir","Fisik","Suara"],c:0,e:"Logika menilai cara berpikir."}
+  ],
+  soshum:[
+    {q:"Ekonomi mempelajari?",a:["Kebutuhan manusia","Cuaca","Mesin"],c:0,e:"Ekonomi fokus pada kebutuhan."},
+    {q:"Sejarah membahas?",a:["Masa lalu","Masa depan","Teknologi"],c:0,e:"Sejarah mempelajari masa lalu."}
+  ]
+};
+
+// ===== STATE =====
+let currentPlaylist=[], currentIndex=0;
+const bgm=document.getElementById("bgm");
+const musicBtn=document.getElementById("musicBtn");
+const volumeControl=document.getElementById("volumeControl");
+
+let musicState=JSON.parse(localStorage.getItem("music"))||{playing:false,volume:0.3};
+bgm.volume=musicState.volume;
+volumeControl.value=musicState.volume;
+
+let state=JSON.parse(localStorage.getItem("aiState"))||{level:1,xp:0,benar:0,salah:0};
+
+// ===== AI & PROGRESS =====
+function updateAI(msg){
+  document.getElementById("aiMessage").innerText=msg;
+  document.getElementById("progress").innerText=`Level ${state.level} • XP ${state.xp}/100 • Benar ${state.benar} • Salah ${state.salah}`;
+}
+
+// ===== LOAD JALUR & PLAYLIST =====
+function loadJalur(jalur){
+  currentPlaylist=playlists[jalur];
+  currentIndex=0;
+  bgm.src=currentPlaylist[currentIndex];
+  if(musicState.playing){bgm.play();musicBtn.innerText="⏸️ Pause Music";}
+  const soal=bankSoal[jalur][Math.floor(Math.random()*bankSoal[jalur].length)];
+  updateAI(`Saya akan membimbing kamu di jalur ${jalur}. Fokus dan jawab dengan tenang.`);
+  document.getElementById("lesson").innerHTML=`
+    <div class="card">
+      <h2>${jalur.toUpperCase()}</h2>
+      <p>${soal.q}</p>
+      ${soal.a.map((x,i)=>`<button onclick="jawab(${i},${soal.c},'${soal.e}')">${x}</button>`).join("")}
+      <p id="feedback" class="ai"></p>
+    </div>
+  `;
+}
+
+// ===== JAWABAN =====
+function jawab(p,c,e){
+  const fb=document.getElementById("feedback");
+  if(p===c){state.xp+=25;state.benar++;fb.innerText="Benar. "+e;}
+  else{state.salah++;fb.innerText="Belum tepat. "+e;}
+  if(state.xp>=100){state.xp=0;state.level++;updateAI("Level kamu naik. Soal akan menyesuaikan.");}
+  else{updateAI("Saya siap lanjutkan latihan.");}
+  localStorage.setItem("aiState",JSON.stringify(state));
+}
+
+// ===== MUSIC CONTROL =====
+musicBtn.onclick=()=>{if(bgm.paused){bgm.play();musicBtn.innerText="⏸️ Pause Music";musicState.playing=true;}
+else{bgm.pause();musicBtn.innerText="▶️ Play Music";musicState.playing=false;}
+localStorage.setItem("music",JSON.stringify(musicState));};
+volumeControl.oninput=()=>{bgm.volume=volumeControl.value;musicState.volume=volumeControl.value;localStorage.setItem("music",JSON.stringify(musicState));};
+bgm.onended=()=>{currentIndex=(currentIndex+1)%currentPlaylist.length;bgm.src=currentPlaylist[currentIndex];bgm.play();};
+
+// ===== MOOD MODE =====
+function setMood(mode){
+  if(mode==='fokus'){document.body.style.background="#0a0f1b";document.body.style.color="#e5e7eb";}
+  else if(mode==='energik'){document.body.style.background="#1a1f33";document.body.style.color="#facc15";}
+  else if(mode==='santai'){document.body.style.background="#123456";document.body.style.color="#a5f3fc";}
+  localStorage.setItem("mood",mode);
+}
+
+// ===== LOAD SAVED MOOD =====
+const savedMood=localStorage.getItem("mood");
+if(savedMood) setMood(savedMood);
+
+updateAI("Halo. Saya AI Tutor kamu. Pilih jalur untuk mulai belajar.");
+</script>
+
+</body>
+</html>
